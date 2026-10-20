@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Acceso de administrador — Cartora{% endblock %}
+{% block description %}Inicia sesión para editar la carta de tu restaurante.{% endblock %}
+{% block body_class %}login-page{% endblock %}
+
+{% block content %}
+<main class="login-card">
+    <a class="brand login-brand" href="{{ url_for('login') }}" aria-label="Cartora">
+        <span class="brand-mark" aria-hidden="true">C</span>
+        <span>CARTORA<small>ESTUDIO DE MENÚS</small></span>
+    </a>
+    <div class="login-heading">
+        <span class="eyebrow">ACCESO PRIVADO</span>
+        <h1>Inicia sesión</h1>
+        <p>Accede al editor para administrar tu carta.</p>
+    </div>
+    {% if error %}
+    <p class="login-error" role="alert">{{ error }}</p>
+    {% endif %}
+    {% if password_configurada %}
+    <form class="login-form" method="post" action="{{ url_for('login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label for="password">Contraseña de administrador</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+        <button class="button button-primary" type="submit">Entrar al editor</button>
+    </form>
+    {% else %}
+    <p class="login-setup">Para habilitar el editor, configura la variable CARTORA_ADMIN_PASSWORD en el servidor.</p>
+    {% endif %}
+</main>
+{% endblock %}

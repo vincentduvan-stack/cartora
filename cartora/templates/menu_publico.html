@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ user.nombre_restaurante }} — Carta digital{% endblock %}
+{% block description %}Descubre la carta de {{ user.nombre_restaurante }}.{% endblock %}
+{% block body_class %}public-menu-page{% endblock %}
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js" defer></script>
+{% endblock %}
+
+{% block content %}
+<header class="public-header">
+    <a class="brand public-brand" href="{{ url_for('menu_publico', slug=user.slug) }}">
+        <span class="brand-mark" aria-hidden="true">C</span>
+        <span>CARTORA<small>CARTA DIGITAL</small></span>
+    </a>
+    <div class="public-actions">
+        <button class="button button-outline" type="button" onclick="compartirMenu()">Compartir carta</button>
+        <button class="button button-primary" type="button" onclick="window.print()">Imprimir</button>
+    </div>
+</header>
+
+<main class="public-menu" data-restaurant-name="{{ user.nombre_restaurante }}">
+    <div class="restaurant-heading">
+        <span class="restaurant-kicker"><span class="live-dot"></span> CARTA DEL RESTAURANTE</span>
+        <h1>{{ user.nombre_restaurante }}</h1>
+        <p>Preparado con cariño. Elige algo delicioso.</p>
+    </div>
+
+    <section class="public-canvas-card" aria-label="Carta de {{ user.nombre_restaurante }}">
+        <div class="public-card-top"><span>MENÚ</span><span>BUEN PROVECHO</span></div>
+        <div class="public-canvas-wrapper">
+            <canvas id="publicCanvas" width="500" height="700" aria-label="Carta del restaurante"></canvas>
+        </div>
+        <div id="empty-menu" class="empty-menu" hidden>
+            <span aria-hidden="true">✳</span>
+            <h2>La carta se está preparando</h2>
+            <p>Vuelve pronto para descubrir nuestros platos.</p>
+        </div>
+    </section>
+    <footer class="public-footer"><span>Una carta hecha con <strong>Cartora</strong></span><a href="{{ url_for('editor') }}">Crear mi menú</a></footer>
+</main>
+
+<script id="public-canvas-data" type="application/json">{{ contenido_json | tojson | safe }}</script>
+<script>
+    async function compartirMenu() {
+        const restaurantName = document.querySelector('.public-menu').dataset.restaurantName;
+        const shareData = { title: document.title, text: `Descubre la carta de ${restaurantName}`, url: window.location.href };
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('No se pudo compartir la carta:', error);
+                }
+            }
+            return;
+        }
+
+        if (navigator.clipboard?.writeText) {
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                alert('Enlace de la carta copiado.');
+                return;
+            } catch (error) {
+                console.error('No se pudo copiar el enlace:', error);
+            }
+        }
+
+        window.prompt('Copia el enlace de la carta:', window.location.href);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const canvasElement = document.getElementById('publicCanvas');
+        const canvasWrapper = document.querySelector('.public-canvas-wrapper');
+        if (typeof fabric === 'undefined') {
+            canvasWrapper.hidden = true;
+            document.getElementById('empty-menu').hidden = false;
+            console.error('No se pudo cargar Fabric.js para mostrar la carta.');
+            return;
+        }
+        const canvas = new fabric.StaticCanvas(canvasElement, { backgroundColor: '#fffaf1' });
+        try {
+            const parsed = JSON.parse(document.getElementById('public-canvas-data').textContent || '{}');
+            const canvasData = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+            if (canvasData && Array.isArray(canvasData.objects) && canvasData.objects.length > 0) {
+                canvas.loadFromJSON(canvasData, function() {
+                    canvas.renderAll();
+                });
+            } else {
+                canvas.dispose();
+                canvasWrapper.hidden = true;
+                document.getElementById('empty-menu').hidden = false;
+            }
+        } catch (error) {
+            canvas.dispose();
+            canvasWrapper.hidden = true;
+            document.getElementById('empty-menu').hidden = false;
+            console.error('No se pudo cargar la carta guardada:', error);
+        }
+    });
+</script>
+{% endblock %}

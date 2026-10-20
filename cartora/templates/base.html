@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#183b32">
+    <meta name="description" content="{% block description %}Diseña y comparte el menú de tu restaurante con Cartora.{% endblock %}">
+    <title>{% block title %}Cartora{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/editor.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Cartora: iniciar editor",
+            "type": "shell",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}\\cartora\\iniciar_cartora.ps1"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}\\cartora"
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "cartora",
+                "pattern": {
+                    "regexp": "^$"
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "Cartora se abrirá en",
+                    "endsPattern": "Running on http://127\\.0\\.0\\.1:"
+                }
+            }
+        }
+    ]
+}

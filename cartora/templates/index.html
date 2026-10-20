@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#183b32">
+    <meta name="description" content="Diseña, edita y comparte la carta de tu restaurante con Cartora.">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Editor de menú — Cartora</title>
+    <link rel="stylesheet" href="../static/css/editor.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js" defer></script>
+    <script src="../static/css/js/editor.js" defer></script>
+</head>
+<body class="editor-page">
+    <header class="app-header">
+        <a class="brand" href="/" aria-label="Cartora, editor de menús">
+            <span class="brand-mark" aria-hidden="true">C</span>
+            <span>CARTORA<small>ESTUDIO DE MENÚS</small></span>
+        </a>
+        <div class="document-name">
+            <span class="eyebrow">EDITANDO LA CARTA DE</span>
+            <strong id="restaurant-name" data-restaurant-name="{{ user.nombre_restaurante }}">Mi restaurante</strong>
+        </div>
+        <div class="header-actions">
+            <span id="save-status" class="save-status" role="status" aria-live="polite">Todos los cambios guardados</span>
+            <a id="public-preview" href="/m/demo" data-slug="{{ user.slug }}" target="_blank" rel="noopener" class="button button-light">Vista previa <span aria-hidden="true">↗</span></a>
+            <button class="button button-primary" id="save-menu" type="button">Guardar cambios</button>
+            <form id="logout-form" action="/logout" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button class="button button-light" type="submit">Cerrar sesión</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="editor-shell">
+        <aside class="tool-panel" aria-label="Herramientas del editor">
+            <div class="panel-intro">
+                <span class="eyebrow">TU CARTA, A TU ESTILO</span>
+                <h1>Diseña tu menú</h1>
+                <p>Añade contenido y acomódalo sobre la página.</p>
+            </div>
+
+            <section class="tool-section" aria-labelledby="content-tools">
+                <h2 id="content-tools">Contenido</h2>
+                <button class="tool-button sample-button" type="button" onclick="insertarEjemplo()"><span class="tool-icon">✦</span><span><strong>Usar diseño de ejemplo</strong><small>Empieza con una carta lista para editar</small></span><span class="tool-add">+</span></button>
+                <button class="tool-button" type="button" onclick="agregarTitulo()"><span class="tool-icon">T</span><span><strong>Título de sección</strong><small>Para entradas, platos o postres</small></span><span class="tool-add">+</span></button>
+                <button class="tool-button" type="button" onclick="agregarPlato()"><span class="tool-icon">Aa</span><span><strong>Nombre y descripción</strong><small>Describe un plato de la carta</small></span><span class="tool-add">+</span></button>
+                <button class="tool-button" type="button" onclick="agregarPrecio()"><span class="tool-icon">$</span><span><strong>Precio</strong><small>Destaca el valor del plato</small></span><span class="tool-add">+</span></button>
+                <button class="tool-button" type="button" onclick="agregarNota()"><span class="tool-icon">✳</span><span><strong>Nota de la casa</strong><small>Favoritos, alérgenos o detalles</small></span><span class="tool-add">+</span></button>
+            </section>
+
+            <section class="tool-section" aria-labelledby="design-tools">
+                <h2 id="design-tools">Diseño</h2>
+                <button class="tool-button" type="button" onclick="agregarRectangulo()"><span class="tool-icon">▰</span><span><strong>Recuadro</strong><small>Resalta una sección</small></span><span class="tool-add">+</span></button>
+                <button class="tool-button" type="button" onclick="agregarSeparador()"><span class="tool-icon">—</span><span><strong>Separador</strong><small>Ordena el contenido</small></span><span class="tool-add">+</span></button>
+                <button class="tool-button" type="button" onclick="agregarTextoLibre()"><span class="tool-icon">¶</span><span><strong>Texto libre</strong><small>Añade un bloque editable</small></span><span class="tool-add">+</span></button>
+                <div class="color-picker">
+                    <span>Color de página</span>
+                    <div class="color-options" role="group" aria-label="Color de fondo">
+                        <button type="button" class="color-swatch swatch-cream" aria-label="Fondo crema" title="Crema" onclick="cambiarFondo('#fffaf1')"></button>
+                        <button type="button" class="color-swatch swatch-white" aria-label="Fondo blanco" title="Blanco" onclick="cambiarFondo('#ffffff')"></button>
+                        <button type="button" class="color-swatch swatch-sage" aria-label="Fondo verde suave" title="Verde suave" onclick="cambiarFondo('#edf3e8')"></button>
+                        <button type="button" class="color-swatch swatch-blush" aria-label="Fondo rosa suave" title="Rosa suave" onclick="cambiarFondo('#fbefea')"></button>
+                        <label class="color-swatch custom-color" title="Elegir otro color">
+                            <input type="color" value="#fffaf1" aria-label="Elegir color de página" onchange="cambiarFondo(this.value)">
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tool-section" aria-labelledby="text-tools">
+                <h2 id="text-tools">Formato de texto</h2>
+                <label class="field-label" for="font-family">Tipografía</label>
+                <select id="font-family" class="editor-select" onchange="cambiarTipografia(this.value)">
+                    <option value="Arial">Clásica</option>
+                    <option value="Georgia">Editorial</option>
+                    <option value="Verdana">Moderna</option>
+                    <option value="Courier New">Monoespaciada</option>
+                </select>
+                <div class="format-row">
+                    <label class="format-field"><span>Tamaño</span><input id="font-size" type="number" min="8" max="64" value="16" aria-label="Tamaño de texto" onchange="cambiarTamanoFuente(this.value)"></label>
+                    <label class="format-field"><span>Color</span><input id="text-color" type="color" value="#39453d" aria-label="Color del texto" onchange="cambiarColorTexto(this.value)"></label>
+                </div>
+                <div class="format-buttons" role="group" aria-label="Estilo del texto">
+                    <button class="button button-outline format-button" type="button" aria-label="Negrita" title="Negrita" onclick="alternarEstiloTexto('bold')"><strong>B</strong></button>
+                    <button class="button button-outline format-button italic-button" type="button" aria-label="Cursiva" title="Cursiva" onclick="alternarEstiloTexto('italic')"><em>I</em></button>
+                    <button class="button button-outline format-button" type="button" aria-label="Alinear a la izquierda" title="Alinear a la izquierda" onclick="alinearTexto('left')">≡</button>
+                    <button class="button button-outline format-button" type="button" aria-label="Centrar texto" title="Centrar texto" onclick="alinearTexto('center')">☰</button>
+                    <button class="button button-outline format-button" type="button" aria-label="Alinear a la derecha" title="Alinear a la derecha" onclick="alinearTexto('right')">≡</button>
+                </div>
+            </section>
+
+            <section class="tool-section actions-section" aria-labelledby="edit-tools">
+                <h2 id="edit-tools">Editar selección</h2>
+                <div class="action-grid">
+                    <button class="button button-outline" type="button" onclick="duplicarSeleccionado()">Duplicar</button>
+                    <button class="button button-outline" type="button" onclick="eliminarSeleccionado()">Eliminar</button>
+                    <button class="button button-outline" type="button" onclick="subirCapa()">Traer al frente</button>
+                    <button class="button button-outline" type="button" onclick="bajarCapa()">Enviar atrás</button>
+                </div>
+            </section>
+
+            <div class="panel-tip"><span aria-hidden="true">✦</span><p><strong>Consejo de la casa</strong><br>Selecciona un elemento para moverlo, cambiar su tamaño o editar su texto.</p></div>
+        </aside>
+
+        <section class="work-area" aria-label="Lienzo del menú">
+            <div class="workspace-toolbar">
+                <div><span class="live-dot"></span> PÁGINA DEL MENÚ <span class="page-count">· 1 página</span></div>
+                <div class="canvas-actions">
+                    <button type="button" id="undo-action" class="quiet-button" onclick="deshacer()" disabled aria-label="Deshacer" title="Deshacer (Ctrl/Cmd + Z)">↶ Deshacer</button>
+                    <button type="button" id="redo-action" class="quiet-button" onclick="rehacer()" disabled aria-label="Rehacer" title="Rehacer (Ctrl/Cmd + Shift + Z)">↷ Rehacer</button>
+                    <button type="button" class="quiet-button" onclick="limpiarMenu()">Limpiar página</button>
+                    <button type="button" class="quiet-button" onclick="window.print()">Imprimir</button>
+                </div>
+            </div>
+            <div class="canvas-stage">
+                <div class="canvas-caption"><span>RESTAURANTE</span><span>MENÚ PERSONALIZADO</span></div>
+                <div class="canvas-wrapper">
+                    <canvas id="menuCanvas" width="500" height="700" aria-label="Lienzo editable del menú"></canvas>
+                </div>
+                <p class="canvas-hint">Haz clic en un elemento para editarlo · Ctrl/Cmd + S para guardar</p>
+            </div>
+        </section>
+    </main>
+
+    <script id="initial-canvas-data" type="application/json">{{ contenido_json | tojson | safe }}</script>
+</body>
+</html>
